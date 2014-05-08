@@ -1,0 +1,44 @@
+/* vertex shader */
+uniform vec3 ecHemishpereLightPosition; //light position in the view coordinate space.
+uniform vec3 SkyColor;
+uniform vec3 GroundColor;
+
+uniform mat4 MVMatrix;
+uniform mat4 MVPMatrix;
+uniform mat3 NormalMatrix;
+attribute vec4 MCVertex;
+attribute vec3 MCNormal;
+
+
+
+vec3 computeHemisphereLightingColor(const in tnorm, const in ecPosition){
+    vec3 lightVec = normalize(ecHemishpereLightPosition - ecPosition);
+    float costheta = dot(tnorm, lightVec);
+    float a = costheta * 0.5 + 0.5;
+    return mix(GroundColor, SkyColor, a);
+}
+
+vec3 computeDirectionalLight
+
+
+
+void main() {
+    vec3 ecPosition = vec3(MVMatrix * MCVertex);
+    vec3 tnorm = normalize(NormalMatrix * MCNormal);
+    vec3 hemishpereLightingColor = computeHemisphereLightingColor(tnorm, ecPosition);
+
+
+    gl_Position = MVPMatrix * MCVertex;
+}
+
+/* fragment shader */
+
+precision mediump float;
+
+vec3 materialColor = vec3(1, 1, 1);
+
+varying vec3 HemishpereColor;
+
+void main(){
+    gl_FragColor = vec4(materialColor * HemishpereColor, 1.0);
+}
