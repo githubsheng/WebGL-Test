@@ -10,7 +10,7 @@ uniform mat3 NormalMatrix;
 attribute vec4 MCVertex;
 attribute vec3 MCNormal;
 
-varying vec3 vDiffuse;
+varying vec3 vDiffuseColor;
 
 void main() {
     vec3 ecPosition = vec3(MVMatrix * MCVertex);
@@ -18,7 +18,7 @@ void main() {
     vec3 lightVec = normalize(ecLightPosition - ecPosition);
     float costheta = dot(tnorm, lightVec);
     float a = costheta * 0.5 + 0.5;
-    vDiffuse = mix(GroundColor, SkyColor, a);
+    vDiffuseColor = mix(GroundColor, SkyColor, a);
     gl_Position = MVPMatrix * MCVertex;
 }
 
@@ -28,12 +28,52 @@ precision mediump float;
 
 vec3 materialColor = vec3(1, 1, 1);
 
-varying float vDiffuse;
+varying vec3 vDiffuseColor;
 
 void main(){
-    gl_FragColor = vec4(materialColor * vDiffuse, 1.0);
+    gl_FragColor = vec4(materialColor * vDiffuseColor, 1.0);
 }
 
 
 /* play function */
+function play(){
+    //get the attribute/uniform indices in the shaders.
+    var uMVPMatrixIdx = gl.getUniformLocation(program, "MVPMatrix");
+    var uNormalMatrixIdx = gl.getUniformLocation(program, "NormalMatrix");
+    var uMVMatrixIdx = gl.getUniformLocation(program, "MVMatrix");
 
+    //feed all kinds of matrices
+    var modelMatrix = mat4.create();
+    var viewMatrix = mat4.create();
+    var projectionMatrix = mat4.create();
+
+    var VPMatrix = mat4.create(); //intermediate result used to calculate MVP
+    var MVPMatrix = mat4.create();
+    var MVMatrix = mat4.create();
+    var normalMatrix = mat3.create();
+
+    //MVP matrix...
+    mat4.perspective(projectionMatrix, Math.PI * 0.1, gl.viewportWidth / gl.viewportHeight, 1, 2000.0);
+    mat4.lookAt(viewMatrix, vec3.fromValues(10, 10, 40), vec3.fromValues(0,0,0), vec3.fromValues(0,1,0));
+    mat4.multiply(VPMatrix, projectionMatrix, viewMatrix);
+    mat4.multiply(MVPMatrix, VPMatrix, modelMatrix);
+    gl.uniformMatrix4fv(uMVPMatrixIdx, false, MVPMatrix);
+
+
+    //normal matrix and MV matrix.
+    mat4.multiply(MVMatrix, viewMatrix, modelMatrix);
+    mat3.normalFromMat4(normalMatrix, MVMatrix);
+    gl.uniformMatrix4fv(uMVMatrixIdx, false, MVMatrix);
+    gl.uniformMatrix3fv(uNormalMatrixIdx, false, normalMatrix);
+
+    var skyColorIdx = gl.getUniformLocation(program, "SkyColor");
+    var groundColorIdx = gl.getUniformLocation(program, "GroundColor");
+    gl.uniform3fv(skyColorIdx, vec3.fromValues(1, 1, 1));
+    gl.uniform3fv(groundColorIdx, vec3.fromValues(0.1, 0.1, 0.1));
+
+    var ecLightPositionIdx = gl.getUniformLocation(program, "ecLightPosition");
+    var wcLightPosition = vec3.fromValues(0, 20, 0);
+    var ecLightPosition = vec3.create();
+    vec3.transformMat4(ecLightPosition, wcLightPosition, viewMatrix);
+    gl.uniform3fv(ecLightPositionIdx, ecLightPosition);
+}
