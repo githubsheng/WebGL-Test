@@ -1,0 +1,39 @@
+/* vertex shader */
+
+uniform vec3 ecLightPosition; //light position in the view coordinate space.
+uniform vec3 SkyColor;
+uniform vec3 GroundColor;
+
+uniform mat4 MVMatrix;
+uniform mat4 MVPMatrix;
+uniform mat3 NormalMatrix;
+attribute vec4 MCVertex;
+attribute vec3 MCNormal;
+
+varying vec3 vDiffuse;
+
+void main() {
+    vec3 ecPosition = vec3(MVMatrix * MCVertex);
+    vec3 tnorm = normalize(NormalMatrix * MCNormal);
+    vec3 lightVec = normalize(ecLightPosition - ecPosition);
+    float costheta = dot(tnorm, lightVec);
+    float a = costheta * 0.5 + 0.5;
+    vDiffuse = mix(GroundColor, SkyColor, a);
+    gl_Position = MVPMatrix * MCVertex;
+}
+
+/* fragment shader */
+
+precision mediump float;
+
+vec3 materialColor = vec3(1, 1, 1);
+
+varying float vDiffuse;
+
+void main(){
+    gl_FragColor = vec4(materialColor * vDiffuse, 1.0);
+}
+
+
+/* play function */
+
