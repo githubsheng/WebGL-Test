@@ -4,34 +4,9 @@
     <meta charset="UTF-8">
     <title></title>
     <script id="shader-vertex" type="x-shader/x-vertex">
-    attribute vec4 aPosition;
-    attribute vec3 aNormal;
-
-    uniform mat4 uMVPMatrix;
-    uniform mat3 uNormalMatrix;
-    uniform vec3 uLightDir;
-
-    varying float vDiffuse;
-
-    void main(){
-    gl_Position = uMVPMatrix * aPosition;
-    vec3 normal = uNormalMatrix * aNormal;
-    vDiffuse = max(dot(normalize(normal), uLightDir), 0.0);
-    }
     </script>
     <script id="shader-fragment" type="x-shader/x-fragment">
-    precision mediump float;
-
-    vec3 materialColor = vec3(0.5, 0.5, 0.5);
-
-    varying vec4 vColor;
-    varying float vDiffuse;
-
-    void main(){
-        gl_FragColor = vec4(materialColor * vDiffuse, 1.0);
-    }
     </script>
-
     <script src="gl-matrix.js"></script>
 </head>
 <body>
