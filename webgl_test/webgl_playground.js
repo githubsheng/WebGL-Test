@@ -17,11 +17,13 @@ var vShader = gl.createShader(gl.VERTEX_SHADER);
 var vShaderSource = document.querySelector("#shader-vertex").innerHTML.trim();
 gl.shaderSource(vShader, vShaderSource);
 gl.compileShader(vShader);
+console.log(gl.getShaderParameter(vShader, gl.COMPILE_STATUS));
 
 var fShader = gl.createShader(gl.FRAGMENT_SHADER);
 var fShaderSource = document.querySelector("#shader-fragment").innerHTML.trim();
 gl.shaderSource(fShader, fShaderSource);
 gl.compileShader(fShader);
+console.log(gl.getShaderParameter(fShader, gl.COMPILE_STATUS));
 
 //connect the shaders to the progam.
 gl.attachShader(program, vShader);
@@ -113,11 +115,28 @@ function play(){
     gl.uniform3fv(skyColorIdx, vec3.fromValues(1, 1, 1));
     gl.uniform3fv(groundColorIdx, vec3.fromValues(0.1, 0.1, 0.1));
 
-    var ecLightPositionIdx = gl.getUniformLocation(program, "ecLightPosition");
-    var wcLightPosition = vec3.fromValues(0, 10, 0);
-    var ecLightPosition = vec3.create();
-    vec3.transformMat4(ecLightPosition, wcLightPosition, viewMatrix);
-    gl.uniform3fv(ecLightPositionIdx, ecLightPosition);
+    var ecHemishpereLightPositionIdx = gl.getUniformLocation(program, "ecHemishpereLightPosition");
+    var wcHemishpereLightPosition = vec3.fromValues(0, 10, 0);
+    var ecHemishpereLightPosition = vec3.create();
+    vec3.transformMat4(ecHemishpereLightPosition, wcHemishpereLightPosition, viewMatrix);
+    gl.uniform3fv(ecHemishpereLightPositionIdx, ecHemishpereLightPosition);
+
+    //directional light
+    var specularContributionIdx = gl.getUniformLocation(program, "SpecularContribution");
+    var diffuseContributionIdx = gl.getUniformLocation(program, "DiffuseContribution");
+    gl.uniform1f(specularContributionIdx, 0.5);
+    gl.uniform1f(diffuseContributionIdx, 0.4);
+    var ecDirectionalLightIdx = gl.getUniformLocation(program, "ecDirectionalLightPosition");
+    var wcDirectionalLightPosition = vec3.fromValues(-5, 4, 5);
+    var ecDirectionalLightPosition = vec3.create();
+    vec3.transformMat4(ecDirectionalLightPosition, wcDirectionalLightPosition, viewMatrix);
+    gl.uniform3fv(ecDirectionalLightIdx, ecDirectionalLightPosition);
+
+    //light mix
+    var hemisphereLightContributionIdx = gl.getUniformLocation(program, "HemisphereLightContribution");
+    var directionalLightContributionIdx = gl.getUniformLocation(program, "DirectionalLightContribution");
+    gl.uniform1f(hemisphereLightContributionIdx, 0.8);
+    gl.uniform1f(directionalLightContributionIdx, 0.3);
 
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
