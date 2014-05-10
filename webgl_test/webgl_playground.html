@@ -4,71 +4,72 @@
     <meta charset="UTF-8">
     <title></title>
     <script id="shader-vertex" type="x-shader/x-vertex">
-    uniform vec3 ecHemishpereLightPosition; //light position in the view coordinate space.
-    uniform vec3 SkyColor;
-    uniform vec3 GroundColor;
+uniform vec3 ecHemishpereLightPosition; //light position in the view coordinate space.
+uniform vec3 SkyColor;
+uniform vec3 GroundColor;
 
-    uniform mat4 MVMatrix;
-    uniform mat4 MVPMatrix;
-    uniform mat3 NormalMatrix;
+uniform mat4 MVMatrix;
+uniform mat4 MVPMatrix;
+uniform mat3 NormalMatrix;
 
-    uniform vec3 ecDirectionalLightPosition;
-    uniform float SpecularContribution;
-    uniform float DiffuseContribution;
+uniform vec3 ecDirectionalLightPosition;
+uniform float SpecularContribution;
+uniform float DiffuseContribution;
 
-    uniform float HemisphereLightContribution;
-    uniform float DirectionalLightContribution;
+uniform float HemisphereLightContribution;
+uniform float DirectionalLightContribution;
 
-    attribute vec4 MCVertex;
-    attribute vec3 MCNormal;
+attribute vec4 MCVertex;
+attribute vec3 MCNormal;
 
-    varying vec3 lightColor;
+varying vec3 lightColor;
 
-    const vec3 DirectionalLightColor = vec3(1.0, 1.0, 1.0);
+const vec3 DirectionalLightColor = vec3(1.0, 1.0, 1.0);
 
-    vec3 computeHemisphereLightingColor(const in vec3 tnorm, const in vec3 ecPosition){
-        vec3 lightDir = normalize(ecHemishpereLightPosition - ecPosition);
-        float costheta = dot(tnorm, lightDir);
-        float a = costheta * 0.5 + 0.5;
-        return mix(GroundColor, SkyColor, a);
+vec3 computeHemisphereLightingColor(const in vec3 tnorm, const in vec3 ecPosition){
+    vec3 lightDir = normalize(ecHemishpereLightPosition - ecPosition);
+    float costheta = dot(tnorm, lightDir);
+    float a = costheta * 0.5 + 0.5;
+    return mix(GroundColor, SkyColor, a);
+}
+
+vec3 computeDirectionalLight(const in vec3 tnorm, const in vec3 ecPosition){
+    vec3 lightDir = normalize(ecDirectionalLightPosition - ecPosition);
+    float diffuse = max(dot(lightDir, tnorm), 0.0);
+    float specular = 0.0;
+
+    if (diffuse > 0.0) {
+        vec3 viewDir = normalize(-ecPosition);
+        vec3 reflectDir = reflect(-lightDir, tnorm);
+        specular = max(dot(reflectDir, viewDir), 0.0);
+        specular = pow(specular, 16.0);
     }
 
-    vec3 computeDirectionalLight(const in vec3 tnorm, const in vec3 ecPosition){
-        vec3 lightDir = normalize(ecDirectionalLightPosition - ecPosition);
-        float diffuse = max(dot(lightDir, tnorm), 0.0);
-        float specular = 0.0;
+    return DirectionalLightColor * (DiffuseContribution * diffuse +  SpecularContribution * specular);
+}
 
-        if (diffuse > 0.0) {
-            vec3 viewDir = normalize(-ecPosition);
-            vec3 reflectDir = reflect(-lightDir, tnorm);
-            specular = max(dot(reflectDir, viewDir), 0.0);
-            specular = pow(specular, 16.0);
-        }
+void main() {
+    vec3 ecPosition = vec3(MVMatrix * MCVertex);
+    vec3 tnorm = normalize(NormalMatrix * MCNormal);
 
-        return DirectionalLightColor * (DiffuseContribution * diffuse +  SpecularContribution * specular);
-    }
+    vec3 hemishpereLightingColor = computeHemisphereLightingColor(tnorm, ecPosition);
+    vec3 directionalLightingColor = computeDirectionalLight(tnorm, ecPosition);
 
-    void main() {
-        vec3 ecPosition = vec3(MVMatrix * MCVertex);
-        vec3 tnorm = normalize(NormalMatrix * MCNormal);
-
-        vec3 hemishpereLightingColor = computeHemisphereLightingColor(tnorm, ecPosition);
-        vec3 directionalLightingColor = computeDirectionalLight(tnorm, ecPosition);
-
-        lightColor = min((hemishpereLightingColor * HemisphereLightContribution + directionalLightingColor * DirectionalLightContribution), 1.0);
-        gl_Position = MVPMatrix * MCVertex;
-    }
+    lightColor = min((hemishpereLightingColor * HemisphereLightContribution + directionalLightingColor * DirectionalLightContribution), 1.0);
+    gl_Position = MVPMatrix * MCVertex;
+}
     </script>
     <script id="shader-fragment" type="x-shader/x-fragment">
-    precision mediump float;
+precision mediump float;
 
-    vec3 materialColor = vec3(1.0, 1.0, 1.0);
+vec3 materialColor = vec3(1.0, 1.0, 1.0);
 
-    varying vec3 lightColor;
+varying vec3 lightColor;
 
-    void main(){
-        gl_FragColor = vec4(materialColor * lightColor, 1.0);
-    }
+void main(){
+    gl_FragColor = vec4(0.5, 1.0, 1.0, 1.0);
+    //gl_FragColor = vec4(materialColor * lightColor, 1.0);
+}
     </script>
     <script src="gl-matrix.js"></script>
 </head>
