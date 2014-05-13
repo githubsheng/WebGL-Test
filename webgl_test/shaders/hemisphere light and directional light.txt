@@ -102,7 +102,7 @@ function play(){
     vec3.transformMat4(ecHemishpereLightPosition, wcHemishpereLightPosition, viewMatrix);
     gl.uniform3fv(ecHemishpereLightPositionIdx, ecHemishpereLightPosition);
 
-    //directional light
+    //directional light (这里我把光源位置和光源方向搞错了，这里其实是错误的）
     var specularContributionIdx = gl.getUniformLocation(program, "SpecularContribution");
     var diffuseContributionIdx = gl.getUniformLocation(program, "DiffuseContribution");
     gl.uniform1f(specularContributionIdx, 0.5);

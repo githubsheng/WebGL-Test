@@ -81,10 +81,6 @@ gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
 
 play();
 
-
-/**
- * just before we draw elements... magic happens here.
- */
 function play(){
     //get the attribute/uniform indices in the shaders.
     var uMVPMatrixIdx = gl.getUniformLocation(program, "MVPMatrix");
@@ -103,51 +99,31 @@ function play(){
 
     //projection matrix, view matrix, and VP matrix.
     mat4.perspective(projectionMatrix, Math.PI * 0.1, gl.viewportWidth / gl.viewportHeight, 1, 2000.0);
-    mat4.lookAt(viewMatrix, vec3.fromValues(5, 20, 40), vec3.fromValues(0,0,0), vec3.fromValues(0,1,0));
+    mat4.lookAt(viewMatrix, vec3.fromValues(10, 20, 40), vec3.fromValues(0,0,0), vec3.fromValues(0,1,0));
     mat4.multiply(VPMatrix, projectionMatrix, viewMatrix);
-    mat4.multiply(MVPMatrix, VPMatrix, modelMatrix);
-    gl.uniformMatrix4fv(uMVPMatrixIdx, false, MVPMatrix);
 
-    //hemisphere light
-    var skyColorIdx = gl.getUniformLocation(program, "SkyColor");
-    var groundColorIdx = gl.getUniformLocation(program, "GroundColor");
-    gl.uniform3fv(skyColorIdx, vec3.fromValues(1, 1, 1));
-    gl.uniform3fv(groundColorIdx, vec3.fromValues(0.1, 0.1, 0.1));
+    //directional light positon
+    var ecDirectionalLightDirIdx = gl.getUniformLocation(program, "ecDirectionalLightDir");
+    var wcDirectionalLightDir = vec3.fromValues(-3, -6, -4);
+    var ecDirectionalLightDir = vec3.create();
+	var ecLightMatrix = mat3.create();
+	mat3.normalFromMat4(ecLightMatrix, viewMatrix);
+    vec3.transformMat3(ecDirectionalLightDir, wcDirectionalLightDir, ecLightMatrix);
+    gl.uniform3fv(ecDirectionalLightDirIdx, ecDirectionalLightDir);
 
-    var ecHemishpereLightPositionIdx = gl.getUniformLocation(program, "ecHemishpereLightPosition");
-    var wcHemishpereLightPosition = vec3.fromValues(0, 10, 0);
-    var ecHemishpereLightPosition = vec3.create();
-    vec3.transformMat4(ecHemishpereLightPosition, wcHemishpereLightPosition, viewMatrix);
-    gl.uniform3fv(ecHemishpereLightPositionIdx, ecHemishpereLightPosition);
-
-    //directional light
-    var specularContributionIdx = gl.getUniformLocation(program, "SpecularContribution");
-    var diffuseContributionIdx = gl.getUniformLocation(program, "DiffuseContribution");
-    gl.uniform1f(specularContributionIdx, 0.5);
-    gl.uniform1f(diffuseContributionIdx, 0.4);
-    var ecDirectionalLightIdx = gl.getUniformLocation(program, "ecDirectionalLightPosition");
-    var wcDirectionalLightPosition = vec3.fromValues(-5, 4, 5);
-    var ecDirectionalLightPosition = vec3.create();
-    vec3.transformMat4(ecDirectionalLightPosition, wcDirectionalLightPosition, viewMatrix);
-    gl.uniform3fv(ecDirectionalLightIdx, ecDirectionalLightPosition);
-
-    //light mix
-    var hemisphereLightContributionIdx = gl.getUniformLocation(program, "HemisphereLightContribution");
-    var directionalLightContributionIdx = gl.getUniformLocation(program, "DirectionalLightContribution");
-    gl.uniform1f(hemisphereLightContributionIdx, 0.8);
-    gl.uniform1f(directionalLightContributionIdx, 0.3);
-
-
-    gl.disable(gl.DEPTH_TEST);
     gl.clearColor(1.0, 1.0, 1.0, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-    gl.enable(gl.BLEND);
+
+	var isTranslucentIdx = gl.getUniformLocation(program, "IsTranslucent");
+	gl.uniform1i(isTranslucentIdx, 0);
+    drawSingleCuboid(0, 0); //正中心的
+	
+	gl.depthMask(false);
+	gl.enable(gl.BLEND);
     gl.blendEquation(gl.FUNC_ADD);
     gl.blendFunc(gl.ZERO, gl.SRC_COLOR);
-    //gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-
-    //draw those 9 cuboids
-    drawSingleCuboid(0, 0); //正中心的
+	gl.uniform1i(isTranslucentIdx, 1);
+	
     drawSingleCuboid(4, 0);
     drawSingleCuboid(-4, 0);
 
@@ -159,10 +135,11 @@ function play(){
     drawSingleCuboid(4, -4);
     drawSingleCuboid(-4, -4);
 
-
     function drawSingleCuboid(x, z){
         mat4.identity(modelMatrix);
+		mat4.rotateY(modelMatrix, modelMatrix, (Math.PI/6) * 6);
         mat4.translate(modelMatrix, modelMatrix, vec3.fromValues(x, 0, z));
+
         //model matrix and MVP matrix...
         mat4.multiply(MVPMatrix, VPMatrix, modelMatrix);
         gl.uniformMatrix4fv(uMVPMatrixIdx, false, MVPMatrix);
@@ -177,12 +154,3 @@ function play(){
         gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_BYTE, 0);
     }
 }
-
-
-//function addDiffuseLight(){
-//    //add diffuse lighting.
-//    var uLightDirIdx = gl.getUniformLocation(program, "uLightDir");
-//    var diffuseLightDirection = vec3.fromValues(10.0, 10.0, 40.0);
-//    vec3.normalize(diffuseLightDirection, diffuseLightDirection);
-//    gl.uniform3fv(uLightDirIdx, diffuseLightDirection);
-//}

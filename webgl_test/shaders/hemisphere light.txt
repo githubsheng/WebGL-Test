@@ -56,8 +56,6 @@ function play(){
     mat4.perspective(projectionMatrix, Math.PI * 0.1, gl.viewportWidth / gl.viewportHeight, 1, 2000.0);
     mat4.lookAt(viewMatrix, vec3.fromValues(5, 20, 40), vec3.fromValues(0,0,0), vec3.fromValues(0,1,0));
     mat4.multiply(VPMatrix, projectionMatrix, viewMatrix);
-    mat4.multiply(MVPMatrix, VPMatrix, modelMatrix);
-    gl.uniformMatrix4fv(uMVPMatrixIdx, false, MVPMatrix);
 
     //hemisphere light
     var skyColorIdx = gl.getUniformLocation(program, "SkyColor");
