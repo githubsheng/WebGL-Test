@@ -88,6 +88,8 @@ play();
 function play(){
     //get the attribute/uniform indices in the shaders.
     var uMVPMatrixIdx = gl.getUniformLocation(program, "MVPMatrix");
+    var uNormalMatrixIdx = gl.getUniformLocation(program, "NormalMatrix");
+    var uMVMatrixIdx = gl.getUniformLocation(program, "MVMatrix");
 
     //feed all kinds of matrices
     var modelMatrix = mat4.create();
@@ -96,23 +98,65 @@ function play(){
 
     var VPMatrix = mat4.create(); //intermediate result used to calculate MVP
     var MVPMatrix = mat4.create();
+    var MVMatrix = mat4.create();
+    var normalMatrix = mat3.create();
 
     //projection matrix, view matrix, and VP matrix.
     mat4.perspective(projectionMatrix, Math.PI * 0.1, gl.viewportWidth / gl.viewportHeight, 1, 2000.0);
-    mat4.lookAt(viewMatrix, vec3.fromValues(5, 20, 40), vec3.fromValues(0,0,0), vec3.fromValues(0,1,0));
+    mat4.lookAt(viewMatrix, vec3.fromValues(10, 20, 40), vec3.fromValues(0,0,0), vec3.fromValues(0,1,0));
     mat4.multiply(VPMatrix, projectionMatrix, viewMatrix);
-    mat4.multiply(MVPMatrix, VPMatrix, modelMatrix);
-    gl.uniformMatrix4fv(uMVPMatrixIdx, false, MVPMatrix);
 
-    gl.disable(gl.DEPTH_TEST);
+    //directional light positon
+    var ecDirectionalLightDirIdx = gl.getUniformLocation(program, "ecDirectionalLightDir");
+    var wcDirectionalLightDir = vec3.fromValues(-3, -6, -4);
+    var ecDirectionalLightDir = vec3.create();
+    var ecLightMatrix = mat3.create();
+    mat3.normalFromMat4(ecLightMatrix, viewMatrix);
+    vec3.transformMat3(ecDirectionalLightDir, wcDirectionalLightDir, ecLightMatrix);
+    gl.uniform3fv(ecDirectionalLightDirIdx, ecDirectionalLightDir);
+
     gl.clearColor(1.0, 1.0, 1.0, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-//    gl.enable(gl.BLEND);
-//    gl.blendEquation(gl.FUNC_ADD);
-//    gl.blendFunc(gl.ZERO, gl.SRC_COLOR);
 
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, elementBuffer);
-    gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_BYTE, 0);
+    var isTranslucentIdx = gl.getUniformLocation(program, "IsTranslucent");
+    gl.uniform1i(isTranslucentIdx, 0);
+    drawSingleCuboid(0, 0); //�����ĵ�
+
+    gl.depthMask(false);
+    gl.enable(gl.BLEND);
+    gl.blendEquation(gl.FUNC_ADD);
+    gl.blendFunc(gl.ZERO, gl.SRC_COLOR);
+    gl.uniform1i(isTranslucentIdx, 1);
+
+    drawSingleCuboid(4, 0);
+    drawSingleCuboid(-4, 0);
+
+    drawSingleCuboid(0, 4);
+    drawSingleCuboid(4, 4);
+    drawSingleCuboid(-4, 4);
+
+    drawSingleCuboid(0, -4);
+    drawSingleCuboid(4, -4);
+    drawSingleCuboid(-4, -4);
+
+    function drawSingleCuboid(x, z){
+        mat4.identity(modelMatrix);
+        mat4.rotateY(modelMatrix, modelMatrix, (Math.PI/6) * 6);
+        mat4.translate(modelMatrix, modelMatrix, vec3.fromValues(x, 0, z));
+
+        //model matrix and MVP matrix...
+        mat4.multiply(MVPMatrix, VPMatrix, modelMatrix);
+        gl.uniformMatrix4fv(uMVPMatrixIdx, false, MVPMatrix);
+
+        //normal matrix and MV matrix.
+        mat4.multiply(MVMatrix, viewMatrix, modelMatrix);
+        mat3.normalFromMat4(normalMatrix, MVMatrix);
+        gl.uniformMatrix4fv(uMVMatrixIdx, false, MVMatrix);
+        gl.uniformMatrix3fv(uNormalMatrixIdx, false, normalMatrix);
+
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, elementBuffer);
+        gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_BYTE, 0);
+    }
 }
 
 

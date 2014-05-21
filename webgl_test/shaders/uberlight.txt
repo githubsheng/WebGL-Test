@@ -1,3 +1,5 @@
+/* note that none of the values/numbers in the following shaders are tuned to achieve a good enough lighting result and I have no idea about the theory behind the shaders*/
+
 /*vertex shader*/
 uniform mat4 MVMatrix;
 uniform mat4 MVPMatrix;
