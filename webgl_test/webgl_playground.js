@@ -88,8 +88,6 @@ play();
 function play(){
     //get the attribute/uniform indices in the shaders.
     var uMVPMatrixIdx = gl.getUniformLocation(program, "MVPMatrix");
-    var uNormalMatrixIdx = gl.getUniformLocation(program, "NormalMatrix");
-    var uMVMatrixIdx = gl.getUniformLocation(program, "MVMatrix");
 
     //feed all kinds of matrices
     var modelMatrix = mat4.create();
@@ -98,8 +96,6 @@ function play(){
 
     var VPMatrix = mat4.create(); //intermediate result used to calculate MVP
     var MVPMatrix = mat4.create();
-    var MVMatrix = mat4.create();
-    var normalMatrix = mat3.create();
 
     //projection matrix, view matrix, and VP matrix.
     mat4.perspective(projectionMatrix, Math.PI * 0.1, gl.viewportWidth / gl.viewportHeight, 1, 2000.0);
@@ -108,74 +104,15 @@ function play(){
     mat4.multiply(MVPMatrix, VPMatrix, modelMatrix);
     gl.uniformMatrix4fv(uMVPMatrixIdx, false, MVPMatrix);
 
-    //hemisphere light
-    var skyColorIdx = gl.getUniformLocation(program, "SkyColor");
-    var groundColorIdx = gl.getUniformLocation(program, "GroundColor");
-    gl.uniform3fv(skyColorIdx, vec3.fromValues(1, 1, 1));
-    gl.uniform3fv(groundColorIdx, vec3.fromValues(0.1, 0.1, 0.1));
-
-    var ecHemishpereLightPositionIdx = gl.getUniformLocation(program, "ecHemishpereLightPosition");
-    var wcHemishpereLightPosition = vec3.fromValues(0, 10, 0);
-    var ecHemishpereLightPosition = vec3.create();
-    vec3.transformMat4(ecHemishpereLightPosition, wcHemishpereLightPosition, viewMatrix);
-    gl.uniform3fv(ecHemishpereLightPositionIdx, ecHemishpereLightPosition);
-
-    //directional light
-    var specularContributionIdx = gl.getUniformLocation(program, "SpecularContribution");
-    var diffuseContributionIdx = gl.getUniformLocation(program, "DiffuseContribution");
-    gl.uniform1f(specularContributionIdx, 0.5);
-    gl.uniform1f(diffuseContributionIdx, 0.4);
-    var ecDirectionalLightIdx = gl.getUniformLocation(program, "ecDirectionalLightPosition");
-    var wcDirectionalLightPosition = vec3.fromValues(-5, 4, 5);
-    var ecDirectionalLightPosition = vec3.create();
-    vec3.transformMat4(ecDirectionalLightPosition, wcDirectionalLightPosition, viewMatrix);
-    gl.uniform3fv(ecDirectionalLightIdx, ecDirectionalLightPosition);
-
-    //light mix
-    var hemisphereLightContributionIdx = gl.getUniformLocation(program, "HemisphereLightContribution");
-    var directionalLightContributionIdx = gl.getUniformLocation(program, "DirectionalLightContribution");
-    gl.uniform1f(hemisphereLightContributionIdx, 0.8);
-    gl.uniform1f(directionalLightContributionIdx, 0.3);
-
-
     gl.disable(gl.DEPTH_TEST);
     gl.clearColor(1.0, 1.0, 1.0, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-    gl.enable(gl.BLEND);
-    gl.blendEquation(gl.FUNC_ADD);
-    gl.blendFunc(gl.ZERO, gl.SRC_COLOR);
-    //gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+//    gl.enable(gl.BLEND);
+//    gl.blendEquation(gl.FUNC_ADD);
+//    gl.blendFunc(gl.ZERO, gl.SRC_COLOR);
 
-    //draw those 9 cuboids
-    drawSingleCuboid(0, 0); //正中心的
-    drawSingleCuboid(4, 0);
-    drawSingleCuboid(-4, 0);
-
-    drawSingleCuboid(0, 4);
-    drawSingleCuboid(4, 4);
-    drawSingleCuboid(-4, 4);
-
-    drawSingleCuboid(0, -4);
-    drawSingleCuboid(4, -4);
-    drawSingleCuboid(-4, -4);
-
-
-    function drawSingleCuboid(x, z){
-        mat4.identity(modelMatrix);
-        mat4.translate(modelMatrix, modelMatrix, vec3.fromValues(x, 0, z));
-        //model matrix and MVP matrix...
-        mat4.multiply(MVPMatrix, VPMatrix, modelMatrix);
-        gl.uniformMatrix4fv(uMVPMatrixIdx, false, MVPMatrix);
-
-        //normal matrix and MV matrix.
-        mat4.multiply(MVMatrix, viewMatrix, modelMatrix);
-        mat3.normalFromMat4(normalMatrix, MVMatrix);
-        gl.uniformMatrix4fv(uMVMatrixIdx, false, MVMatrix);
-        gl.uniformMatrix3fv(uNormalMatrixIdx, false, normalMatrix);
-
-        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, elementBuffer);
-        gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_BYTE, 0);
-    }
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, elementBuffer);
+    gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_BYTE, 0);
 }
 
 
